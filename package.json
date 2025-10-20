@@ -1,0 +1,28 @@
+{
+  "name": "resume-ecosystem-node",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "common-lib",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,auth,activity,verify,resume,int,notify,file \"npm run dev -w services/api-gateway\" \"npm run dev -w services/auth-service\" \"npm run dev -w services/activity-service\" \"npm run dev -w services/verification-service\" \"npm run dev -w services/resume-service\" \"npm run dev -w services/integration-service\" \"npm run dev -w services/notification-service\" \"npm run dev -w services/file-service\"",
+    "build": "npm run build -w common-lib && npm run build -ws services/*",
+    "start:all": "npm run dev",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "prisma:generate": "npm run prisma:generate -w services/auth-service && npm run prisma:generate -w services/activity-service && npm run prisma:generate -w services/verification-service && npm run prisma:generate -w services/resume-service && npm run prisma:generate -w services/integration-service && npm run prisma:generate -w services/notification-service && npm run prisma:generate -w services/file-service",
+    "migrate": "npm run migrate -w services/auth-service && npm run migrate -w services/activity-service && npm run migrate -w services/verification-service && npm run migrate -w services/resume-service && npm run migrate -w services/integration-service && npm run migrate -w services/notification-service && npm run migrate -w services/file-service",
+    "seed": "npm run seed -w services/auth-service && npm run seed -w services/activity-service && npm run seed -w services/verification-service && npm run seed -w services/resume-service && npm run seed -w services/integration-service && npm run seed -w services/notification-service && npm run seed -w services/file-service"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3",
+    "prisma": "^6.17.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}
