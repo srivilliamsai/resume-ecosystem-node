@@ -23,7 +23,6 @@ A next-generation **Resume Building & Career Ecosystem** that automatically buil
 13. [Environment Variables](#environment-variables)
 14. [Troubleshooting](#troubleshooting)
 15. [Future Enhancements](#future-enhancements)
-16. [License](#license)
 
 ---
 
