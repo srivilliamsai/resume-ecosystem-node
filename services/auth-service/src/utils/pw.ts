@@ -1,10 +1,25 @@
 import crypto from "crypto";
-export async function hash(pw: string) {
-const salt = crypto.randomBytes(8).toString("hex");
-return salt + ":" + crypto.pbkdf2Sync(pw, salt, 10000, 32, "sha256").toString("hex");
+
+export async function hash(password: string): Promise<string> {
+  if (!password) {
+    throw new Error("Password is required");
+  }
+
+  const salt = crypto.randomBytes(16).toString("hex");
+  const digest = crypto.pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex");
+  return `${salt}:${digest}`;
 }
-export async function compare(pw: string, stored: string) {
-const [salt, h] = stored.split(":");
-const test = crypto.pbkdf2Sync(pw, salt, 10000, 32, "sha256").toString("hex");
-return h === test;
+
+export async function compare(password: string, stored?: string | null): Promise<boolean> {
+  if (!password || !stored) {
+    return false;
+  }
+
+  const [salt, digest] = stored.split(":");
+  if (!salt || !digest) {
+    return false;
+  }
+
+  const test = crypto.pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(digest, "hex"), Buffer.from(test, "hex"));
 }

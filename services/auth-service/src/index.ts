@@ -1,4 +1,4 @@
-import { buildServer } from "./server.ts";
+import { buildServer } from "@resume/services/server";
 import { routes } from "./routes/auth.js";
 const PORT = Number(process.env.PORT || 4010);
 const app = buildServer("auth-service", routes);

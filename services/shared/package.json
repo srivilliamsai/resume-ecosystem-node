@@ -1,0 +1,23 @@
+{
+  "name": "@resume/services",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    "./server": "./dist/server.js",
+    "./kafka": "./dist/kafka.js",
+    "./prisma": "./dist/prisma.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.4.2",
+    "@fastify/rate-limit": "^8.0.0",
+    "@fastify/swagger": "^8.14.0",
+    "@fastify/swagger-ui": "^1.10.2",
+    "@prisma/client": "^6.18.0",
+    "fastify": "^4.27.2",
+    "kafkajs": "^2.2.4"
+  }
+}

@@ -1,4 +1,4 @@
-import { JwtUser } from "@common/index.js";
+import { JwtUser } from "common-lib";
 import * as jose from "jose";
 export async function requireUser(req: any, reply: any): Promise<JwtUser> {
 const token = (req.headers.authorization || "").replace("Bearer ", "");

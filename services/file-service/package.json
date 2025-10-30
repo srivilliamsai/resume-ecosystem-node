@@ -1,36 +1,21 @@
 {
-"name": "file-service",
-"version": "1.0.0",
-"type": "module",
-"main": "dist/index.js",
-"types": "dist/index.d.ts",
-"scripts": {
-"dev": "nodemon --watch src --exec ts-node src/index.ts",
-"build": "tsc -p tsconfig.json",
-"start": "node dist/index.js",
-"prisma:generate": "prisma generate",
-"migrate": "prisma migrate deploy",
-"seed": "ts-node prisma/seed.ts || true"
-},
-"dependencies": {
-"@prisma/client": "^5.19.1",
-"fastify": "^4.27.2",
-"fastify-cors": "^8.4.2",
-"fastify-rate-limit": "^7.6.1",
-"fastify-swagger": "^8.14.0",
-"fastify-swagger-ui": "^1.10.2",
-"kafkajs": "^2.2.4",
-"ioredis": "^5.4.1",
-"dotenv": "^16.4.5",
-"pino": "^9.5.0",
-"jose": "^5.2.4",
-"cross-fetch": "^4.0.0",
-"puppeteer": "^23.4.1"
-},
-"devDependencies": {
-"prisma": "^5.19.1",
-"ts-node": "^10.9.2",
-"typescript": "^5.5.4",
-"nodemon": "^3.1.4"
-}
+  "name": "file-service",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "seed": "tsx prisma/seed.ts || true"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "@resume/services": "file:../shared",
+    "common-lib": "file:../../common-lib",
+    "puppeteer": "^23.4.1"
+  }
 }

@@ -17,12 +17,12 @@
     "seed": "npm run seed -w services/auth-service && npm run seed -w services/activity-service && npm run seed -w services/verification-service && npm run seed -w services/resume-service && npm run seed -w services/integration-service && npm run seed -w services/notification-service && npm run seed -w services/file-service"
   },
   "devDependencies": {
+    "@prisma/client": "^6.18.0",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
-    "nodemon": "^3.1.4",
     "prettier": "^3.3.3",
-    "prisma": "^6.17.1",
-    "ts-node": "^10.9.2",
+    "prisma": "^6.18.0",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.4"
   }
 }

@@ -4,15 +4,16 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "migrate": "prisma migrate deploy",
-    "seed": "ts-node prisma/seed.ts || true"
+    "seed": "tsx prisma/seed.ts || true"
   },
   "dependencies": {
-    "@prisma/client": "^5.19.1",
-    "prisma": "^5.19.1"
+    "@prisma/client": "^6.18.0",
+    "@resume/services": "file:../shared",
+    "common-lib": "file:../../common-lib"
   }
 }
