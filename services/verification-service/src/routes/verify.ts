@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@resume/services/prisma";
 import { producer } from "@resume/services/kafka";
@@ -66,7 +67,7 @@ export async function routes(app: FastifyInstance): Promise<void> {
         activityId,
         method: "HASH",
         status: ok ? "OK" : "FAILED",
-        logs: { expected, actual },
+        logs: { expected, actual } as Prisma.JsonObject,
         verifiedAt: new Date()
       }
     });
@@ -99,7 +100,7 @@ export async function routes(app: FastifyInstance): Promise<void> {
         activityId,
         method: "WEBHOOK",
         status: ok ? "OK" : "FAILED",
-        logs: { signature, payload },
+        logs: { signature, payload: payload as Prisma.JsonValue } as Prisma.JsonObject,
         verifiedAt: new Date()
       }
     });
