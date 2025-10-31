@@ -18,12 +18,44 @@ model User {
   resume    Resume?
 }
 
-enum ActivityType { INTERNSHIP COURSE HACKATHON PROJECT }
-enum ActivityStatus { PENDING VERIFIED REJECTED }
-enum ArtifactKind { CERT BADGE PR SUBMISSION }
-enum VerificationStatus { OK FAILED PENDING }
-enum VerificationMethod { WEBHOOK OAUTH HASH OCR }
-enum ResumeVisibility { PRIVATE PUBLIC LINK }
+enum ActivityType {
+  INTERNSHIP
+  COURSE
+  HACKATHON
+  PROJECT
+}
+
+enum ActivityStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ArtifactKind {
+  CERT
+  BADGE
+  PR
+  SUBMISSION
+}
+
+enum VerificationStatus {
+  OK
+  FAILED
+  PENDING
+}
+
+enum VerificationMethod {
+  WEBHOOK
+  OAUTH
+  HASH
+  OCR
+}
+
+enum ResumeVisibility {
+  PRIVATE
+  PUBLIC
+  LINK
+}
 
 model Activity {
   id        String   @id @default(cuid())
@@ -65,7 +97,7 @@ model Resume {
   id               String          @id @default(cuid())
   userId           String          @unique
   user             User            @relation(fields: [userId], references: [id])
-  currentVersionId String?
+  currentVersionId String? @unique
   currentVersion   ResumeVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   visibility       ResumeVisibility @default(PRIVATE)
   versions         ResumeVersion[]
@@ -78,6 +110,7 @@ model ResumeVersion {
   createdAt DateTime @default(now())
   score     Int
   sections  Json
+  currentOf Resume?  @relation("CurrentVersion")
 }
 
 model TrustedIssuer {
