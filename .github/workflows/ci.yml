@@ -61,4 +61,4 @@ jobs:
 
       # Run monorepo tests (backend + frontend)
       - name: Unit tests
-        run: npm test --workspaces
+        run: npm test --workspaces --if-present
