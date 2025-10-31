@@ -8,6 +8,7 @@
     "services/*"
   ],
   "scripts": {
+    "prebuild": "npm run build -w @resume/services",
     "dev": "concurrently -n api,auth,activity,verify,resume,int,notify,file,web \"npm run dev -w services/api-gateway\" \"npm run dev -w services/auth-service\" \"npm run dev -w services/activity-service\" \"npm run dev -w services/verification-service\" \"npm run dev -w services/resume-service\" \"npm run dev -w services/integration-service\" \"npm run dev -w services/notification-service\" \"npm run dev -w services/file-service\" \"npm run dev -w services/web-app\"",
     "build": "npm run build --workspaces --if-present",
     "start:all": "npm run dev",

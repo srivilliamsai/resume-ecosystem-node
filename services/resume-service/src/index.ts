@@ -1,5 +1,7 @@
 import { buildServer } from "@resume/services/server";
 import { kafka, producer, startKafka, createConsumer } from "@resume/services/kafka";
+import type { EachMessagePayload } from "kafkajs";
+
 import { routes } from "./routes/resume.js";
 import { Topics } from "common-lib";
 import { rebuildForUser } from "./services/rebuilder.js";
@@ -17,7 +19,7 @@ async function start() {
   await consumer.subscribe({ topic: Topics.ActivityVerified, fromBeginning: true });
 
   await consumer.run({
-    eachMessage: async ({ message }) => {
+    eachMessage: async ({ message }: EachMessagePayload) => {
       if (!message.value) return;
 
       const payload = JSON.parse(message.value.toString()) as { userId: string; status: string };
@@ -46,7 +48,7 @@ async function start() {
   app.log.info(`resume-service running on ${HOST}:${PORT}`);
 }
 
-start().catch((err) => {
-  app.log.error(err, "failed to start resume-service");
+start().catch((err: unknown) => {
+  app.log.error({ err }, "failed to start resume-service");
   process.exit(1);
 });

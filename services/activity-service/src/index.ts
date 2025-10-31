@@ -1,5 +1,7 @@
 import { buildServer } from "@resume/services/server";
 import { startKafka, createConsumer } from "@resume/services/kafka";
+import type { EachMessagePayload } from "kafkajs";
+
 import { routes } from "./routes/activities.js";
 import { Topics } from "common-lib";
 import { ingestWebhookEvent } from "./services/webhook-ingestor.js";
@@ -16,7 +18,7 @@ async function start() {
   await consumer.subscribe({ topic: Topics.WebhookReceived, fromBeginning: true });
 
   await consumer.run({
-    eachMessage: async ({ message }) => {
+    eachMessage: async ({ message }: EachMessagePayload) => {
       if (!message.value) return;
       try {
         const payload = JSON.parse(message.value.toString());
@@ -31,7 +33,7 @@ async function start() {
   app.log.info(`activity-service running on ${HOST}:${PORT}`);
 }
 
-start().catch((err) => {
-  app.log.error(err, "failed to start activity-service");
+start().catch((err: unknown) => {
+  app.log.error({ err }, "failed to start activity-service");
   process.exit(1);
 });

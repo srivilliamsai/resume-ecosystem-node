@@ -11,7 +11,7 @@ app
   .then(() => {
     app.log.info(`file-service running on ${HOST}:${PORT}`);
   })
-  .catch((err) => {
-    app.log.error(err, "failed to start file-service");
+  .catch((err: unknown) => {
+    app.log.error({ err }, "failed to start file-service");
     process.exit(1);
   });
