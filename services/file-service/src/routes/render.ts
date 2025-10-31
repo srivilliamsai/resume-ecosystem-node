@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-
-import puppeteer from "puppeteer";
+import PDFDocument from "pdfkit";
+import type PDFKit from "pdfkit";
 
 import { prisma } from "@resume/services/prisma";
 
@@ -8,66 +8,144 @@ type RenderBody = {
   resumeVersionId?: string;
 };
 
-function htmlTemplate(version: any): string {
+type NormalisedItem = {
+  title: string;
+  organization?: string;
+  score?: number;
+  start?: string | null;
+  end?: string | null;
+  description?: string;
+};
+
+const SECTION_ORDER: Array<{ key: string; label: string }> = [
+  { key: "projects", label: "Projects" },
+  { key: "experience", label: "Experience" },
+  { key: "courses", label: "Courses" },
+  { key: "hackathons", label: "Hackathons" }
+];
+
+function formatDate(value: unknown): string | null {
+  if (!value) return null;
+  const asDate = new Date(String(value));
+  if (Number.isNaN(asDate.getTime())) {
+    return null;
+  }
+  return asDate.toLocaleDateString();
+}
+
+function normaliseDescription(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is string => typeof entry === "string").join(" • ");
+  }
+  return undefined;
+}
+
+function normaliseItems(value: unknown): NormalisedItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((raw, index) => {
+    if (typeof raw === "string") {
+      return { title: raw };
+    }
+
+    if (raw && typeof raw === "object") {
+      const item = raw as Record<string, unknown>;
+      const titleCandidate = item.title ?? item.organization ?? `Item ${index + 1}`;
+
+      return {
+        title: typeof titleCandidate === "string" ? titleCandidate : String(titleCandidate),
+        organization: typeof item.organization === "string" ? item.organization : undefined,
+        score: typeof item.score === "number" ? item.score : undefined,
+        start: formatDate(item.startDate),
+        end: formatDate(item.endDate),
+        description: normaliseDescription(item.description ?? item.text)
+      };
+    }
+
+    return { title: JSON.stringify(raw) };
+  });
+}
+
+function renderSection(doc: PDFKit.PDFDocument, heading: string, items: NormalisedItem[]): void {
+  doc.moveDown(1);
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(16).text(heading);
+  doc.moveDown(0.35);
+
+  if (items.length === 0) {
+    doc.fillColor("#64748b").font("Helvetica").fontSize(11).text("No entries yet.");
+    return;
+  }
+
+  for (const item of items) {
+    doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(12).text(item.title, { continued: false });
+
+    if (item.organization) {
+      doc.fillColor("#475569").font("Helvetica").fontSize(10).text(item.organization);
+    }
+
+    if (item.description) {
+      doc.fillColor("#475569").font("Helvetica").fontSize(10).text(item.description, { lineGap: 2 });
+    }
+
+    const badges: string[] = [];
+    if (typeof item.score === "number") {
+      badges.push(`Score +${item.score}`);
+    }
+
+    const dates = [item.start, item.end].filter(Boolean).join(" – ");
+    if (dates) {
+      badges.push(dates);
+    }
+
+    if (badges.length > 0) {
+      doc.fillColor("#64748b").font("Helvetica").fontSize(9).text(badges.join("   "));
+    }
+
+    doc.moveDown(0.6);
+  }
+}
+
+async function createPdf(version: any): Promise<Buffer> {
   const sections = version.sections ?? {};
+  const summary =
+    Array.isArray(sections.summary) && sections.summary[0]?.text
+      ? String(sections.summary[0].text)
+      : "Dynamic resume generated from verified activities.";
 
-  const formatDate = (value: unknown): string | undefined => {
-    if (!value) return undefined;
-    const date = new Date(value as string);
-    if (Number.isNaN(date.getTime())) {
-      return undefined;
-    }
-    return date.toLocaleDateString();
-  };
+  const doc = new PDFDocument({
+    size: "A4",
+    margin: 56
+  });
 
-  const renderList = (items: any[] | undefined): string => {
-    if (!Array.isArray(items) || items.length === 0) {
-      return "<li>No entries yet.</li>";
-    }
+  const chunks: Buffer[] = [];
+  doc.on("data", (chunk) => chunks.push(chunk));
 
-    return items
-      .map((item) => {
-        const title = item.title || item.organization || "Item";
-        const score = typeof item.score === "number" ? item.score : 0;
-        const start = formatDate(item.startDate);
-        const end = formatDate(item.endDate);
-        const dates = [start, end].filter(Boolean).join(" – ");
-        return `<li><strong>${title}</strong>${dates ? ` <span class="dates">${dates}</span>` : ""}<span class="score">Score: ${score}</span></li>`;
-      })
-      .join("");
-  };
+  const pdfBuffer = new Promise<Buffer>((resolve, reject) => {
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+  });
 
-  const summary = Array.isArray(sections.summary) && sections.summary[0]?.text ? sections.summary[0].text : "";
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(26).text("Resume Snapshot");
+  doc.moveDown(0.4);
+  doc.fillColor("#0f172a").font("Helvetica").fontSize(12).text(`Version ${version.id?.slice?.(0, 8) ?? "—"}`);
 
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Resume</title>
-    <style>
-      body { font-family: Arial, Helvetica, sans-serif; margin: 24px; color: #111; }
-      h1 { margin: 0 0 12px; font-size: 28px; }
-      h2 { margin: 24px 0 12px; font-size: 20px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-      ul { list-style: none; padding: 0; margin: 0; }
-      li { margin: 8px 0; }
-      .score { float: right; font-size: 12px; color: #444; }
-      .summary { margin-bottom: 16px; }
-      .dates { margin-left: 8px; font-size: 12px; color: #666; }
-    </style>
-  </head>
-  <body>
-    <h1>Resume Snapshot</h1>
-    <p class="summary">${summary}</p>
-    <h2>Projects</h2>
-    <ul>${renderList(sections.projects)}</ul>
-    <h2>Experience</h2>
-    <ul>${renderList(sections.experience)}</ul>
-    <h2>Courses</h2>
-    <ul>${renderList(sections.courses)}</ul>
-    <h2>Hackathons</h2>
-    <ul>${renderList(sections.hackathons)}</ul>
-  </body>
-</html>`;
+  doc.moveDown(0.6);
+  doc.fillColor("#475569").font("Helvetica").fontSize(11).text(summary, { lineGap: 4 });
+
+  doc.moveDown(0.8);
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(12).text(`Score: ${typeof version.score === "number" ? version.score : "—"}`);
+
+  for (const section of SECTION_ORDER) {
+    const items = normaliseItems(sections[section.key]);
+    renderSection(doc, section.label, items);
+  }
+
+  doc.end();
+
+  return pdfBuffer;
 }
 
 export async function routes(app: FastifyInstance): Promise<void> {
@@ -83,20 +161,10 @@ export async function routes(app: FastifyInstance): Promise<void> {
       return reply.code(404).send({ error: "Resume version not found" });
     }
 
-    const html = htmlTemplate(version);
+    const pdf = await createPdf(version);
 
-    const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-
-    try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: "networkidle0" });
-      const pdf = await page.pdf({ format: "A4", printBackground: true });
-
-      reply.header("Content-Type", "application/pdf");
-      reply.header("Content-Disposition", `inline; filename=resume-${resumeVersionId}.pdf`);
-      return reply.send(pdf);
-    } finally {
-      await browser.close();
-    }
+    reply.header("Content-Type", "application/pdf");
+    reply.header("Content-Disposition", `inline; filename=resume-${resumeVersionId}.pdf`);
+    return reply.send(pdf);
   });
 }
