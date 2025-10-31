@@ -14,8 +14,8 @@ export async function proxyRegister(app: FastifyInstance): Promise<void> {
   for (const [prefix, upstream] of Object.entries(MAP)) {
     const options: FastifyHttpProxyOptions & { prefix: string } = {
       upstream,
-      rewritePrefix: "",
-      prefix
+      prefix,
+      rewritePrefix: prefix
     };
 
     await app.register(fastifyHttpProxy, options);
