@@ -47,6 +47,5 @@ coverage/
 **/src/generated/client
 
 
-# Issue Templates
-.github/ISSUE_TEMPLATE
+
 
