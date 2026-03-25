@@ -1,281 +1,337 @@
-# Resume Ecosystem
+# 🧠 Resume Ecosystem – Intelligent Resume & Career Platform
 
-_Dynamic resume builder that keeps pace with every verified activity._
+### 🚀 Node.js | Kafka | Postgres | Redis | Microservices | Prisma | Docker
 
-![Node.js](https://img.shields.io/badge/Node.js-20.x-73C619?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) ![Kafka](https://img.shields.io/badge/Kafka-Event%20Driven-231F20?logo=apache-kafka&logoColor=white)
-
-The Resume Ecosystem is a monorepo that automatically builds a living resume from internships, hackathons, courses, and project completions. Each verified record is streamed through Kafka, persisted in Postgres via Prisma, and reflected in a modern React/TypeScript front-end.
+A next-generation **Resume Building & Career Ecosystem** that automatically builds **dynamic, verified resumes** from real achievements — internships, hackathons, online courses, and projects — and updates them in real-time as users complete new activities.
 
 ---
 
-## At a Glance
+## 📘 Table of Contents
 
-| Item                | Details |
-|---------------------|---------|
-| **Architecture**    | Event-driven microservices with Kafka topics |
-| **Core Services**   | API Gateway, Auth, Activity, Verification, Resume, Integration, Notification, File Renderer |
-| **Data Stores**     | PostgreSQL (Prisma), Redis cache |
-| **Frontend**        | `services/web-app` (React + Vite + Tailwind) |
-| **PDF Generation**  | File service using pdfkit |
-| **Dev Commands**    | `npm run docker:up`, `npm run dev`, `npm run db:push`, `npm run seed` |
-
----
-
-## Table of Contents
-
-1. [Architecture Overview](#architecture-overview)
-2. [Tech Stack](#tech-stack)
-3. [Repository Structure](#repository-structure)
-4. [Prerequisites](#prerequisites)
-5. [Quick Start](#quick-start)
-6. [Running the Frontend](#running-the-frontend)
-7. [Service Reference](#service-reference)
-8. [Database & Migrations](#database--migrations)
-9. [Environment Variables](#environment-variables)
-10. [Common Scripts](#common-scripts)
-11. [UI Walkthrough](#ui-walkthrough)
-12. [Troubleshooting](#troubleshooting)
-13. [Next Steps](#next-steps)
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Tech Stack](#tech-stack)
+4. [Microservices](#microservices)
+5. [Data Flow](#data-flow)
+6. [Business Logic](#business-logic)
+7. [Folder Structure](#folder-structure)
+8. [Installation](#installation)
+9. [Running the System](#running-the-system)
+10. [API Endpoints](#api-endpoints)
+11. [Events & Topics](#events--topics)
+12. [Testing](#testing)
+13. [Environment Variables](#environment-variables)
+14. [Troubleshooting](#troubleshooting)
+15. [Future Enhancements](#future-enhancements)
 
 ---
 
-## Architecture Overview
+## 🧩 Overview
+
+**Goal:**
+To create a connected backend that integrates multiple sub-platforms — Internship Platforms, Hackathon Platforms, Online Learning Systems, and Project Verification Modules — into a unified ecosystem where verified achievements automatically update a student’s professional resume.
+
+**Key Features**
+
+* Auto-generated verified resumes (real-time updates)
+* API gateway for unified routing
+* JWT-based authentication
+* Kafka-driven event system
+* Postgres-backed persistence with Prisma ORM
+* Redis caching and rate-limiting
+* Resume versioning and ranking logic
+* PDF rendering service
+* Integration with GitHub, Coursera, and other platforms
+
+---
+
+## 🏗️ Architecture
 
 ```
-┌───────────┐         ┌──────────────┐        ┌────────────┐
-│  Clients  │◄──────► │ API Gateway  │ ─────► │ Auth Svc   │
-└───────────┘         └──────┬───────┘        └────┬───────┘
-                              │                     │
-                              ▼                     ▼
-                       ┌────────────┐        ┌──────────────┐
-                       │ Activity   │ ─────► │ Verification │
-                       └─────┬──────┘        └────┬─────────┘
-                             │   Kafka topics     │
-                             ▼                    ▼
-                       ┌────────────┐        ┌─────────────┐
-                       │ Resume     │ ─────► │ Notification│
-                       └────┬───────┘        └─────────────┘
-                            │
-                            ▼
-                       ┌────────────┐
-                       │ File Svc   │  → PDF resume
-                       └────────────┘
+Integration → Activity → Verification → Resume → Notification → File Renderer
+                       ↘ Auth & JWT Gateway ↗
 ```
 
-* **Event-first:** Activity events (`activity.created`, `activity.verified`, `resume.version.published`) keep services decoupled.
-* **API Gateway:** Single entry point for REST; issues JWT to downstream services.
-* **Prisma & Postgres:** Each service owns schemas inside the shared database.
-* **Redis:** Caching layer for verification lookups and rate-limiting.
-* **Front-end:** React app consumes the gateway for auth, activities, resume state, and PDF rendering.
+* **Event-driven microservice architecture** (loosely coupled)
+* Communication via **Kafka** topics
+* Shared utilities via **common-lib**
+* Each service is independently deployable and testable
 
 ---
 
-## Tech Stack
+## ⚙️ Tech Stack
 
-| Layer              | Libraries / Services |
-|--------------------|----------------------|
-| Runtime            | Node.js 20, TypeScript 5 |
-| HTTP               | Fastify, Express, Axios |
-| Data               | PostgreSQL, Prisma ORM |
-| Messaging          | KafkaJS, Kafka UI |
-| Cache              | Redis 7 |
-| Front-end          | React 18, Vite, TailwindCSS, Zustand |
-| PDF Renderer       | pdfkit |
-| Tooling            | Docker Compose, Concurrently, ESLint, Prettier |
+| Layer     | Technology                              |
+| :-------- | :-------------------------------------- |
+| Runtime   | Node.js 20+ (TypeScript/JavaScript)     |
+| Framework | Express.js / Fastify                    |
+| ORM       | Prisma with PostgreSQL                  |
+| Cache     | Redis 7                                 |
+| Messaging | KafkaJS (Kafka 3.7+)                    |
+| Auth      | JWT (HS256/RS256)                       |
+| Docs      | Swagger / OpenAPI                       |
+| Infra     | Docker Compose                          |
+| Testing   | Jest / Supertest / Testcontainers       |
+| Utils     | Nodemon, Concurrently, ESLint, Prettier |
 
 ---
 
-## Repository Structure
+## 🧱 Microservices
+
+| Service                  | Port   | Responsibility                                    |
+| ------------------------ | ------ | ------------------------------------------------- |
+| **api-gateway**          | `4000` | Central router, CORS, JWT pass-through            |
+| **auth-service**         | `4010` | User registration, login, JWT issuance            |
+| **activity-service**     | `4020` | Manage internships, courses, hackathons, projects |
+| **verification-service** | `4030` | Verify authenticity (hash/signature/OAuth)        |
+| **resume-service**       | `4040` | Build, rank, and version resumes                  |
+| **integration-service**  | `4050` | Connect external APIs (GitHub, Coursera, etc.)    |
+| **notification-service** | `4060` | Consume `resume.version.published` events         |
+| **file-service**         | `4070` | Render resume PDFs and templates                  |
+
+---
+
+## 🔄 Data Flow
+
+1. **User adds an activity** →
+   `activity.created` event emitted.
+
+2. **Verification service** listens →
+   validates authenticity → emits `activity.verified`.
+
+3. **Resume service** consumes verified event →
+   rebuilds and re-scores resume → emits `resume.version.published`.
+
+4. **Notification service** consumes publish event →
+   notifies user via email/WS.
+
+5. **File service** allows rendering of the latest resume as PDF.
+
+---
+
+## 🧠 Business Logic
+
+### 1. Activity Deduplication
+
+Detect duplicate entries using **Jaccard similarity** between titles:
 
 ```
-├── services/
-│   ├── api-gateway/         # Fastify gateway providing REST facade
-│   ├── auth-service/        # Sign-up / sign-in / JWT issuing
-│   ├── activity-service/    # CRUD for activities & dedupe logic
-│   ├── verification-service/# Hash / issuer verification flows
-│   ├── resume-service/      # Resume builder, ranking, versioning
-│   ├── integration-service/ # Webhook ingest, connectors
-│   ├── notification-service/# Fan-out resume events
-│   ├── file-service/        # Resume PDF rendering via pdfkit
-│   └── web-app/             # React + Vite front-end
-├── common-lib/              # Shared scoring utils and types
-├── scripts/                 # Repo-level utilities (e.g., fix-build)
-├── prisma/                  # Shared Prisma helpers
-└── docker/docker-compose.yml
+similarity = |tokensA ∩ tokensB| / |tokensA ∪ tokensB|
+```
+
+If ≥ 0.7 → reject as duplicate (HTTP 409).
+
+### 2. Verification Cache
+
+LRU cache of recent 1000 verifications to avoid redundant checks.
+
+### 3. Resume Ranking
+
+Each activity contributes to resume score:
+
+```
+score = base*0.5 + (trust/100)*0.3 + ln(1+impact)*0.2 + 5*exp(-daysSinceEnd/365)
+```
+
+Top-K selection per section.
+
+### 4. Event Topics
+
+* `activity.created`
+* `activity.verified`
+* `resume.version.published`
+* `integration.webhook.received`
+
+---
+
+## 📂 Folder Structure
+
+```
+resume-ecosystem/
+├── package.json
+├── .env.example
+├── docker/
+│   └── docker-compose.yml
+├── common-lib/
+│   ├── src/index.ts
+│   └── package.json
+└── services/
+    ├── api-gateway/
+    ├── auth-service/
+    ├── activity-service/
+    ├── verification-service/
+    ├── resume-service/
+    ├── integration-service/
+    ├── notification-service/
+    └── file-service/
 ```
 
 ---
 
-## Prerequisites
+## ⚡ Installation
 
-* Node.js **20.x** and npm **10.x**
-* Docker Desktop (Compose v2)
-* PostgreSQL, Redis, Kafka provided via Docker
-* macOS/Linux/WSL2 recommended
+### Prerequisites
 
----
+* Node.js ≥ 20
+* Docker & Docker Compose
+* npm / pnpm
+* Kafka & Postgres ports open (`9092`, `5432`)
 
-## Quick Start
+### 1. Clone Repository
 
 ```bash
-# 1. Install node dependencies
+git clone https://github.com/<yourname>/resume-ecosystem.git
+cd resume-ecosystem
+```
+
+### 2. Install Dependencies & Build
+
+```bash
 npm install
+npm run prisma:generate
+npm run build
+```
 
-# 2. Start infrastructure (Postgres, Redis, Kafka, Kafka UI)
-npm run docker:up
+### 3. Start Infrastructure
 
-# 3. Apply database schema & generate Prisma clients
-npm run db:push
+```bash
+cd docker
+docker compose up -d
+```
 
-# 4. Seed baseline users/activities (includes admin@example.com)
-npm run seed
+Services started:
 
-# 5. Launch all microservices + web app
+* Kafka → localhost:9092
+* Zookeeper → localhost:2181
+* Postgres → localhost:5432
+* Redis → localhost:6379
+* Kafka UI → [http://localhost:8080](http://localhost:8080)
+
+### 4. Run All Services
+
+```bash
+cd ..
 npm run dev
 ```
 
-Services boot on ports `4000-4070`; the web app runs on **http://localhost:5173** via the gateway proxy.
+---
 
-> 🔁 **Reset from scratch:** `npm run db:reset` drops all volumes, recreates containers, pushes schema, and seeds fresh data.
+## 🌐 API Endpoints
+
+### Auth Service
+
+| Method | Endpoint         | Description                |
+| ------ | ---------------- | -------------------------- |
+| POST   | `/auth/register` | Register new user          |
+| POST   | `/auth/token`    | Issue JWT token            |
+| GET    | `/auth/me`       | Return logged-in user info |
+
+### Activity Service
+
+| Method | Endpoint          | Description         |
+| ------ | ----------------- | ------------------- |
+| POST   | `/activities`     | Create activity     |
+| GET    | `/activities`     | List all activities |
+| GET    | `/activities/:id` | Get single activity |
+
+### Verification Service
+
+| POST | `/verify/:activityId/hash` | Hash verification |
+| GET | `/verify/status/:activityId` | Get status |
+
+### Resume Service
+
+| GET | `/resume/me` | Current resume |
+| POST | `/resume/rebuild` | Force rebuild |
+| GET | `/resume/versions` | Resume history |
+
+### File Service
+
+| POST | `/render` | Render resume PDF |
 
 ---
 
-## Running the Frontend
+## 📡 Events & Topics
 
-The default `npm run dev` already starts `services/web-app`. To work on the UI alone:
+| Topic                          | Producer             | Consumer             | Description               |
+| ------------------------------ | -------------------- | -------------------- | ------------------------- |
+| `activity.created`             | Activity Service     | Verification Service | Triggers verification     |
+| `activity.verified`            | Verification Service | Resume Service       | Rebuild resume            |
+| `resume.version.published`     | Resume Service       | Notification Service | Notify user               |
+| `integration.webhook.received` | Integration Service  | Activity Service     | Add new external activity |
+
+---
+
+## 🧪 Testing
+
+### Run All Tests
 
 ```bash
-npm run dev -w services/web-app
+npm test
 ```
 
-* Tailwind live reload, dark/light theme toggle via Zustand store.
-* Front-end API base URL reads `VITE_API_BASE_URL` (defaults to `http://localhost:4000`).
+### Key Test Suites
 
-Build for production:
+* Unit Tests (Jest/Vitest)
+* Integration Tests (Testcontainers for Kafka/Postgres)
+* E2E Tests (Supertest on Gateway)
 
-```bash
-npm run build -w services/web-app
+---
+
+## ⚙️ Environment Variables
+
+📄 `.env.example`
+
+```
+# Common
+NODE_ENV=development
+JWT_SECRET=supersecret
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=root
+DB_PASS=root
+DB_NAME=resume_db
+
+# Kafka
+KAFKA_BROKERS=localhost:9092
+KAFKA_CLIENT_ID=resume-ecosystem
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Ports
+AUTH_PORT=4010
+ACTIVITY_PORT=4020
+VERIFY_PORT=4030
+RESUME_PORT=4040
+INTEGRATION_PORT=4050
+NOTIFY_PORT=4060
+FILE_PORT=4070
 ```
 
 ---
 
-## Service Reference
+## 🧰 Troubleshooting
 
-| Service | Port | Highlights |
-|---------|------|------------|
-| api-gateway | 4000 | JWT verification, proxy routes, rate limiting |
-| auth-service | 4010 | Bcrypt hashing, Prisma user model, seed admin account |
-| activity-service | 4020 | Activity CRUD, Jaccard dedupe, Kafka producer |
-| verification-service | 4030 | Hash verification, LRU cache, emits `activity.verified` |
-| resume-service | 4040 | Resume rebuild pipeline, ranking, version management |
-| integration-service | 4050 | Webhook ingestion for external platforms |
-| notification-service | 4060 | Resume publish notifications (email/WS webhook-ready) |
-| file-service | 4070 | pdfkit HTML template rendering |
-
-All services share TypeScript configs via `tsconfig.base.json` and use `@resume/services` for Fastify boilerplate.
+| Issue                   | Cause                         | Fix                         |
+| ----------------------- | ----------------------------- | --------------------------- |
+| Kafka connection failed | Broker not running            | `docker compose up -d`      |
+| Port conflict           | Existing service on same port | Change port in `.env`       |
+| Database not reachable  | Wrong credentials             | Check `.env` or Docker logs |
+| Resume not updating     | Kafka consumer group stuck    | Restart resume-service      |
+| PDF not rendering       | Puppeteer missing             | Reinstall dependencies      |
 
 ---
 
-## Database & Migrations
+## 🧭 Future Enhancements
 
-Each service owns its Prisma schema under `services/<service>/prisma/schema.prisma`. The root command orchestrates sequential pushes:
-
-```bash
-npm run db:push
-```
-
-Generate clients for a single service:
-
-```bash
-npm run prisma:generate -w services/auth-service
-```
-
-Seed all services:
-
-```bash
-npm run seed
-```
-
-Seed scripts populate:
-
-* Admin user (`admin@example.com` / `password123`)
-* Sample activities, trusted issuers, verification cases
+* Add OAuth 2.0 full integration (Google, LinkedIn, Coursera)
+* Implement GraphQL API gateway
+* Introduce ML-powered Resume Scoring
+* Add real-time WebSocket notifications
+* Deploy to Kubernetes with Helm charts
 
 ---
-
-## Environment Variables
-
-Copy `.env.example` to `.env` at the repo root. Key values:
-
-```ini
-# Postgres & Prisma
-POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:5432/resume_db
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/resume_db?schema=public"
-
-# Auth
-JWT_SECRET=supersecretkey
-
-# Kafka & Redis
-KAFKA_BROKER=localhost:9092
-REDIS_URL=redis://localhost:6379
-
-# Optional: front-end base
-VITE_API_BASE_URL=http://localhost:4000
-```
-
-Each service also contains a `.env` with service-specific overrides (ports, secrets). Update only if you need custom networking.
-
----
-
-## Common Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run docker:up` | Start Postgres, Redis, Kafka, Kafka UI |
-| `npm run docker:down` | Stop containers (`docker compose down`) |
-| `npm run db:push` | Apply Prisma schema for every service |
-| `npm run seed` | Seed all service databases |
-| `npm run db:reset` | Drop volumes, recreate infra, push schema, seed |
-| `npm run dev` | Run all services & web app with live reload |
-| `npm run build -ws` | Build all workspaces sequentially |
-| `npm run lint` | Run ESLint across the monorepo |
-
----
-
-## UI Walkthrough
-
-| Page | Highlights |
-|------|------------|
-| **Login / Register** | Full-screen gradient, centered layout, dark/light mode toggle, validation messaging |
-| **Dashboard** | Activity snapshot, recent activity timeline, live resume card with score & rebuild controls |
-| **Activities** | Stacked layout (Add Activity → Activity list), responsive grid, badges for type/status, impact scoring |
-| **Verification** | Awaiting queue, hash verification form, responsive chip layout, LRU-based cache messaging |
-| **Resume** | Latest version, rebuild & PDF download actions, share link helper |
-| **Profile** | Theme toggle, preference toggles, API token safety notes |
-
-Front-end state is managed via Zustand stores (`auth`, `theme`, `activities`) for predictable persistence between sessions.
-
----
-
-## Troubleshooting
-
-| Issue | Resolution |
-|-------|------------|
-| `KafkaJSNumberOfRetriesExceeded` | Ensure Docker containers are up (`npm run docker:up`) and retry service start |
-| Postgres connection refused | Port 5432 blocked → stop local Postgres or change `POSTGRES_URL` to a free port |
-| `npm run dev` exits immediately | Another service already listening on 4000-4070 → release ports or adjust `.env` |
-| PDF download fails | Confirm file-service running on port 4070 and `VITE_API_BASE_URL` reachable |
-| Activities not updating after verify | Run `npm run seed` or rebuild resume manually; check Kafka UI (`http://localhost:8080`) for stuck messages |
-
----
-
-## Next Steps
-
-* Integrate OAuth providers (LinkedIn, GitHub) for automatic activity ingestion.
-* Deploy to Kubernetes with Helm and productionized Kafka (Confluent / Redpanda).
-* Expand notification-service to push WebSocket and email alerts.
-* Add E2E testing harness via Playwright or Cypress for the web app.
-
----
-
-If you build something great with the Resume Ecosystem, share it! Feedback and contributions are welcome via issues or pull requests.

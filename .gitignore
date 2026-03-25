@@ -43,3 +43,10 @@ coverage/
 
 # Generated Prisma Client
 .prisma/client/
+# Generated Prisma Clients
+**/src/generated/client
+
+
+# Issue Templates
+.github/ISSUE_TEMPLATE
+

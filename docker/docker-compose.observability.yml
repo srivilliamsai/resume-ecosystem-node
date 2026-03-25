@@ -1,0 +1,104 @@
+# docker/docker-compose.observability.yml
+# Observability stack for resume-ecosystem-node
+# Includes: Jaeger (tracing), Prometheus (metrics), Grafana (dashboards)
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d
+#
+# Access UIs:
+#   - Jaeger UI: http://localhost:16686
+#   - Prometheus: http://localhost:9090
+#   - Grafana: http://localhost:3000 (admin/admin)
+
+version: "3.8"
+
+services:
+  # ==========================================================================
+  # Jaeger - Distributed Tracing
+  # ==========================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: resume-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "5775:5775/udp"   # Agent - accept zipkin.thrift over compact thrift protocol
+      - "6831:6831/udp"   # Agent - accept jaeger.thrift over compact thrift protocol
+      - "6832:6832/udp"   # Agent - accept jaeger.thrift over binary thrift protocol
+      - "5778:5778"       # Agent - serve configs
+      - "16686:16686"     # Query service - Jaeger UI
+      - "14268:14268"     # Collector - accept jaeger.thrift directly from clients
+      - "14250:14250"     # Collector - accept model.proto
+      - "4317:4317"       # OTLP gRPC receiver
+      - "4318:4318"       # OTLP HTTP receiver
+    networks:
+      - resume-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:14269/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================================================
+  # Prometheus - Metrics Collection
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: resume-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - resume-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - jaeger
+
+  # ==========================================================================
+  # Grafana - Dashboards & Visualization
+  # ==========================================================================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: resume-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - resume-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - prometheus
+
+networks:
+  resume-network:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

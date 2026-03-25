@@ -1,0 +1,25 @@
+// services/auth-service/src/prisma.ts
+// Prisma client instance for auth-service
+// This allows the service to have its own connection and makes testing easier
+
+import { PrismaClient } from "./generated/client/index.js";
+
+// Use a singleton pattern to prevent multiple connections in development
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+export default prisma;

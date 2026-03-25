@@ -1,11 +1,82 @@
+// services/notification-service/prisma/schema.prisma
+// Database schema for notification-service
+
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("POSTGRES_URL")
 }
+
+// =============================================================================
+// Notification Models
+// =============================================================================
+
+enum NotificationType {
+  RESUME_PUBLISHED
+  ACTIVITY_VERIFIED
+  ACTIVITY_REJECTED
+  WELCOME
+  SYSTEM
+}
+
+enum NotificationChannel {
+  EMAIL
+  WEBSOCKET
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String
+  type        NotificationType
+  channel     NotificationChannel
+  status      NotificationStatus  @default(PENDING)
+  subject     String?
+  message     String
+  metadata    Json?               // Additional data (resumeId, versionId, etc.)
+  sentAt      DateTime?
+  readAt      DateTime?
+  error       String?             // Error message if failed
+  retryCount  Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// User preferences for notifications
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  emailEnabled    Boolean  @default(true)
+  pushEnabled     Boolean  @default(true)
+  websocketEnabled Boolean @default(true)
+  // Specific notification types
+  resumePublished Boolean  @default(true)
+  activityVerified Boolean @default(true)
+  activityRejected Boolean @default(true)
+  systemMessages  Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// =============================================================================
+// Shared Models (read-only access for lookups)
+// =============================================================================
 
 model User {
   id        String   @id @default(cuid())
@@ -31,32 +102,6 @@ enum ActivityStatus {
   REJECTED
 }
 
-enum ArtifactKind {
-  CERT
-  BADGE
-  PR
-  SUBMISSION
-}
-
-enum VerificationStatus {
-  OK
-  FAILED
-  PENDING
-}
-
-enum VerificationMethod {
-  WEBHOOK
-  OAUTH
-  HASH
-  OCR
-}
-
-enum ResumeVisibility {
-  PRIVATE
-  PUBLIC
-  LINK
-}
-
 model Activity {
   id          String   @id @default(cuid())
   userId      String
@@ -70,34 +115,19 @@ model Activity {
   source      String         @default("MANUAL")
   metadata    Json?
   createdAt   DateTime       @default(now())
-  artifacts   AchievementArtifact[]
-  verifications VerificationCase[]
 }
 
-model AchievementArtifact {
-  id          String   @id @default(cuid())
-  activityId  String
-  activity    Activity  @relation(fields: [activityId], references: [id])
-  kind        ArtifactKind
-  url         String
-  sha256Hex   String
-}
-
-model VerificationCase {
-  id          String   @id @default(cuid())
-  activityId  String
-  activity    Activity @relation(fields: [activityId], references: [id])
-  method      VerificationMethod
-  status      VerificationStatus
-  logs        Json?
-  verifiedAt  DateTime?
+enum ResumeVisibility {
+  PRIVATE
+  PUBLIC
+  LINK
 }
 
 model Resume {
   id               String         @id @default(cuid())
   userId           String         @unique
   user             User           @relation(fields: [userId], references: [id])
-  currentVersionId String?        @unique   // ✅ Added unique constraint here
+  currentVersionId String?        @unique
   currentVersion   ResumeVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   visibility       ResumeVisibility @default(PRIVATE)
   versions         ResumeVersion[]
@@ -110,13 +140,5 @@ model ResumeVersion {
   createdAt DateTime @default(now())
   score     Int
   sections  Json
-
   currentOf Resume? @relation("CurrentVersion")
-}
-
-model TrustedIssuer {
-  id        String   @id @default(cuid())
-  domain    String   @unique
-  publicKey String
-  methods   String
 }

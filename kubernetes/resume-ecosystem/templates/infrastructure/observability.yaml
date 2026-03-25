@@ -1,0 +1,363 @@
+# kubernetes/resume-ecosystem/templates/infrastructure/observability.yaml
+# Observability stack: Jaeger, Prometheus, Grafana
+
+{{- if .Values.global.components.observability }}
+
+# =============================================================================
+# Jaeger - Distributed Tracing
+# =============================================================================
+{{- if .Values.observability.jaeger.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-jaeger
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "jaeger") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "resume-ecosystem.serviceSelectorLabels" (list . "jaeger") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resume-ecosystem.serviceSelectorLabels" (list . "jaeger") | nindent 8 }}
+    spec:
+      containers:
+        - name: jaeger
+          image: {{ .Values.observability.jaeger.image.repository }}:{{ .Values.observability.jaeger.image.tag }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: ui
+              containerPort: 16686
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: otlp-http
+              containerPort: 4318
+            - name: jaeger-thrift
+              containerPort: 14268
+          env:
+            - name: COLLECTOR_OTLP_ENABLED
+              value: "true"
+          resources:
+            {{- toYaml .Values.observability.jaeger.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 14269
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-jaeger
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "jaeger") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: ui
+      port: 16686
+      targetPort: ui
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+    - name: jaeger-thrift
+      port: 14268
+      targetPort: jaeger-thrift
+  selector:
+    {{- include "resume-ecosystem.serviceSelectorLabels" (list . "jaeger") | nindent 4 }}
+
+# Alias for OTEL exporter endpoint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "jaeger") | nindent 4 }}
+spec:
+  type: ExternalName
+  externalName: {{ include "resume-ecosystem.fullname" . }}-jaeger.{{ include "resume-ecosystem.namespace" . }}.svc.cluster.local
+{{- end }}
+
+# =============================================================================
+# Prometheus - Metrics Collection
+# =============================================================================
+{{- if .Values.observability.prometheus.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-prometheus-config
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "prometheus") | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'api-gateway'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-api-gateway:4000']
+
+      - job_name: 'auth-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-auth-service:4010']
+
+      - job_name: 'activity-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-activity-service:4020']
+
+      - job_name: 'verification-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-verification-service:4030']
+
+      - job_name: 'resume-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-resume-service:4040']
+
+      - job_name: 'integration-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-integration-service:4050']
+
+      - job_name: 'notification-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-notification-service:4060']
+
+      - job_name: 'file-service'
+        static_configs:
+          - targets: ['{{ include "resume-ecosystem.fullname" . }}-file-service:4070']
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-prometheus
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "prometheus") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "resume-ecosystem.serviceSelectorLabels" (list . "prometheus") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resume-ecosystem.serviceSelectorLabels" (list . "prometheus") | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - name: prometheus
+          image: {{ .Values.observability.prometheus.image.repository }}:{{ .Values.observability.prometheus.image.tag }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--web.enable-lifecycle"
+          ports:
+            - name: http
+              containerPort: 9090
+          resources:
+            {{- toYaml .Values.observability.prometheus.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /prometheus
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "resume-ecosystem.fullname" . }}-prometheus-config
+        {{- if .Values.observability.prometheus.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "resume-ecosystem.fullname" . }}-prometheus
+        {{- else }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+
+{{- if .Values.observability.prometheus.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-prometheus
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "prometheus") | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.observability.prometheus.persistence.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-prometheus
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "prometheus") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9090
+      targetPort: http
+  selector:
+    {{- include "resume-ecosystem.serviceSelectorLabels" (list . "prometheus") | nindent 4 }}
+{{- end }}
+
+# =============================================================================
+# Grafana - Dashboards
+# =============================================================================
+{{- if .Values.observability.grafana.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-grafana-datasources
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "grafana") | nindent 4 }}
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://{{ include "resume-ecosystem.fullname" . }}-prometheus:9090
+        isDefault: true
+      - name: Jaeger
+        type: jaeger
+        access: proxy
+        url: http://{{ include "resume-ecosystem.fullname" . }}-jaeger:16686
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-grafana
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "grafana") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "resume-ecosystem.serviceSelectorLabels" (list . "grafana") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resume-ecosystem.serviceSelectorLabels" (list . "grafana") | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 472
+        runAsUser: 472
+      containers:
+        - name: grafana
+          image: {{ .Values.observability.grafana.image.repository }}:{{ .Values.observability.grafana.image.tag }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.observability.grafana.adminUser }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.observability.grafana.adminPassword }}
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+          resources:
+            {{- toYaml .Values.observability.grafana.resources | nindent 12 }}
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: data
+              mountPath: /var/lib/grafana
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: datasources
+          configMap:
+            name: {{ include "resume-ecosystem.fullname" . }}-grafana-datasources
+        {{- if .Values.observability.grafana.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "resume-ecosystem.fullname" . }}-grafana
+        {{- else }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+
+{{- if .Values.observability.grafana.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-grafana
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "grafana") | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.observability.grafana.persistence.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-grafana
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "grafana") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+  selector:
+    {{- include "resume-ecosystem.serviceSelectorLabels" (list . "grafana") | nindent 4 }}
+{{- end }}
+
+{{- end }}

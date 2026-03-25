@@ -1,0 +1,44 @@
+# kubernetes/resume-ecosystem/templates/configmap.yaml
+# Shared configuration for all resume-ecosystem services
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-config
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.labels" . | nindent 4 }}
+data:
+  # Environment
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+
+  # JWT
+  JWT_EXPIRATION: {{ .Values.config.jwtExpiration | quote }}
+
+  # Service URLs (internal cluster DNS)
+  AUTH_URL: "http://{{ include "resume-ecosystem.fullname" . }}-auth-service:4010"
+  ACTIVITY_URL: "http://{{ include "resume-ecosystem.fullname" . }}-activity-service:4020"
+  VERIFY_URL: "http://{{ include "resume-ecosystem.fullname" . }}-verification-service:4030"
+  RESUME_URL: "http://{{ include "resume-ecosystem.fullname" . }}-resume-service:4040"
+  INTEGRATION_URL: "http://{{ include "resume-ecosystem.fullname" . }}-integration-service:4050"
+  NOTIFICATION_URL: "http://{{ include "resume-ecosystem.fullname" . }}-notification-service:4060"
+  FILE_URL: "http://{{ include "resume-ecosystem.fullname" . }}-file-service:4070"
+
+  # Redis
+  REDIS_URL: {{ include "resume-ecosystem.redisUrl" . | quote }}
+
+  # Kafka
+  KAFKA_BROKER: {{ include "resume-ecosystem.kafkaBroker" . | quote }}
+
+  # Observability
+  OTEL_ENABLED: {{ .Values.config.otelEnabled | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.config.otelExporterEndpoint | quote }}
+  METRICS_ENABLED: {{ .Values.config.metricsEnabled | quote }}
+
+  {{- if .Values.notificationService.enabled }}
+  # SMTP (non-sensitive)
+  SMTP_HOST: {{ .Values.notificationService.smtp.host | quote }}
+  SMTP_PORT: {{ .Values.notificationService.smtp.port | quote }}
+  SMTP_FROM: {{ .Values.notificationService.smtp.from | quote }}
+  {{- end }}

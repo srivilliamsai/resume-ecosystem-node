@@ -1,0 +1,157 @@
+# kubernetes/resume-ecosystem/templates/infrastructure/kafka.yaml
+# Kafka cluster via Strimzi Operator CRDs
+#
+# Prerequisites:
+# 1. Install Strimzi Operator:
+#    kubectl create namespace kafka
+#    kubectl create -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
+#
+# 2. Or use Helm:
+#    helm repo add strimzi https://strimzi.io/charts/
+#    helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator -n kafka
+
+{{- if and .Values.kafka.enabled .Values.kafka.strimzi.create (not .Values.kafka.strimzi.existingCluster) }}
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-kafka
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "kafka") | nindent 4 }}
+spec:
+  kafka:
+    version: {{ .Values.kafka.strimzi.version }}
+    replicas: {{ .Values.kafka.strimzi.replicas }}
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      # Broker configuration
+      offsets.topic.replication.factor: {{ min .Values.kafka.strimzi.replicas 3 }}
+      transaction.state.log.replication.factor: {{ min .Values.kafka.strimzi.replicas 3 }}
+      transaction.state.log.min.isr: {{ min .Values.kafka.strimzi.replicas 2 }}
+      default.replication.factor: {{ min .Values.kafka.strimzi.replicas 3 }}
+      min.insync.replicas: {{ min .Values.kafka.strimzi.replicas 2 }}
+      inter.broker.protocol.version: "3.6"
+      # Log retention
+      log.retention.hours: 168
+      log.retention.bytes: 1073741824
+      # Performance tuning
+      num.partitions: 6
+      num.recovery.threads.per.data.dir: 2
+    storage:
+      type: {{ .Values.kafka.strimzi.storage.type }}
+      {{- if eq .Values.kafka.strimzi.storage.type "persistent-claim" }}
+      size: {{ .Values.kafka.strimzi.storage.size }}
+      {{- if .Values.kafka.strimzi.storage.storageClass }}
+      class: {{ .Values.kafka.strimzi.storage.storageClass }}
+      {{- end }}
+      deleteClaim: false
+      {{- end }}
+    resources:
+      {{- toYaml .Values.kafka.strimzi.resources | nindent 6 }}
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          name: {{ include "resume-ecosystem.fullname" . }}-kafka-metrics
+          key: kafka-metrics-config.yml
+
+  # Zookeeper configuration (required for Kafka < 3.4 without KRaft)
+  zookeeper:
+    replicas: {{ .Values.kafka.strimzi.zookeeper.replicas }}
+    storage:
+      type: persistent-claim
+      size: {{ .Values.kafka.strimzi.zookeeper.storage.size }}
+      {{- if .Values.kafka.strimzi.storage.storageClass }}
+      class: {{ .Values.kafka.strimzi.storage.storageClass }}
+      {{- end }}
+      deleteClaim: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  # Entity Operator for topic and user management
+  entityOperator:
+    topicOperator:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+    userOperator:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+---
+# Kafka metrics ConfigMap for Prometheus scraping
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "resume-ecosystem.fullname" . }}-kafka-metrics
+  namespace: {{ include "resume-ecosystem.namespace" . }}
+  labels:
+    {{- include "resume-ecosystem.serviceLabels" (list . "kafka") | nindent 4 }}
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+      - pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value"
+        name: kafka_server_$1_$2
+        type: GAUGE
+        labels:
+          clientId: "$3"
+          topic: "$4"
+          partition: "$5"
+      - pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value"
+        name: kafka_server_$1_$2
+        type: GAUGE
+        labels:
+          clientId: "$3"
+          broker: "$4:$5"
+      - pattern: "kafka.server<type=(.+), name=(.+)><>Value"
+        name: kafka_server_$1_$2
+        type: GAUGE
+      - pattern: "kafka.server<type=(.+), name=(.+)><>Count"
+        name: kafka_server_$1_$2_total
+        type: COUNTER
+
+{{- range .Values.kafka.topics }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ .name | replace "." "-" }}
+  namespace: {{ include "resume-ecosystem.namespace" $ }}
+  labels:
+    strimzi.io/cluster: {{ include "resume-ecosystem.fullname" $ }}-kafka
+    {{- include "resume-ecosystem.serviceLabels" (list $ "kafka") | nindent 4 }}
+spec:
+  topicName: {{ .name }}
+  partitions: {{ .partitions }}
+  replicas: {{ min .replicas $.Values.kafka.strimzi.replicas }}
+  config:
+    {{- range $key, $value := .config }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+{{- end }}
+
+{{- end }}

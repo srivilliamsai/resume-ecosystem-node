@@ -1,0 +1,84 @@
+# docker/prometheus/alerts.yml
+# Prometheus alerting rules for resume-ecosystem-node
+
+groups:
+  - name: resume-ecosystem-alerts
+    rules:
+      # Service availability alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(resume_http_requests_total{status_code=~"5.."}[5m])) by (service)
+          /
+          sum(rate(resume_http_requests_total[5m])) by (service)
+          > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} has >5% error rate for 2 minutes."
+
+      # High latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(resume_http_request_duration_seconds_bucket[5m])) by (le, service))
+          > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "95th percentile latency >2s on {{ $labels.service }}."
+
+      # Resume build taking too long
+      - alert: SlowResumeBuild
+        expr: |
+          histogram_quantile(0.95, sum(rate(resume_resume_build_duration_seconds_bucket[5m])) by (le))
+          > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Resume builds are slow"
+          description: "95th percentile resume build time exceeds 30 seconds."
+
+      # Kafka consumer lag
+      - alert: KafkaConsumerLag
+        expr: resume_kafka_consumer_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag on {{ $labels.topic }}"
+          description: "Consumer group {{ $labels.groupId }} has lag >1000 on {{ $labels.topic }}."
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes / 1024 / 1024) > 512
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.service }}"
+          description: "{{ $labels.service }} is using >512MB memory."
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolLow
+        expr: resume_db_connections_active > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Active DB connections >80, pool may be exhausted soon."

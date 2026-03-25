@@ -1,0 +1,26 @@
+# kubernetes/resume-ecosystem/templates/services/microservices.yaml
+# Deployments, Services, and HPAs for all resume-ecosystem microservices
+
+# API Gateway (port 4000)
+{{ include "resume-ecosystem.microservice" (list . "api-gateway" .Values.apiGateway 4000) }}
+
+# Auth Service (port 4010)
+{{ include "resume-ecosystem.microservice" (list . "auth-service" .Values.authService 4010) }}
+
+# Activity Service (port 4020)
+{{ include "resume-ecosystem.microservice" (list . "activity-service" .Values.activityService 4020) }}
+
+# Verification Service (port 4030)
+{{ include "resume-ecosystem.microservice" (list . "verification-service" .Values.verificationService 4030) }}
+
+# Resume Service (port 4040)
+{{ include "resume-ecosystem.microservice" (list . "resume-service" .Values.resumeService 4040) }}
+
+# Integration Service (port 4050)
+{{ include "resume-ecosystem.microservice" (list . "integration-service" .Values.integrationService 4050) }}
+
+# Notification Service (port 4060)
+{{ include "resume-ecosystem.microservice" (list . "notification-service" .Values.notificationService 4060) }}
+
+# File Service (port 4070)
+{{ include "resume-ecosystem.microservice" (list . "file-service" .Values.fileService 4070) }}

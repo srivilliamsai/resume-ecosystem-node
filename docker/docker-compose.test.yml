@@ -1,0 +1,39 @@
+# docker/docker-compose.test.yml
+# Test environment Docker Compose configuration
+# Usage: docker compose -f docker/docker-compose.test.yml up -d
+
+version: "3.8"
+
+services:
+  # PostgreSQL test database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: resume-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: resume_test_db
+    ports:
+      - "5433:5432" # Different port to avoid conflicts with dev DB
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for testing (optional, if needed)
+  redis-test:
+    image: redis:7-alpine
+    container_name: resume-redis-test
+    ports:
+      - "6380:6379" # Different port to avoid conflicts
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-test-data:

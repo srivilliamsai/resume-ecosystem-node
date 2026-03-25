@@ -1,0 +1,122 @@
+
+================================================================================
+  Resume Ecosystem has been deployed!
+================================================================================
+
+Release: {{ .Release.Name }}
+Namespace: {{ include "resume-ecosystem.namespace" . }}
+
+{{- if .Values.ingress.enabled }}
+
+EXTERNAL ACCESS
+---------------
+{{- range .Values.ingress.hosts }}
+  - {{ .host }}
+{{- end }}
+
+{{- if .Values.ingress.tls }}
+TLS is enabled.
+{{- end }}
+
+{{- else }}
+
+PORT FORWARDING
+---------------
+To access the API Gateway locally:
+
+  kubectl port-forward svc/{{ include "resume-ecosystem.fullname" . }}-api-gateway 4000:4000 -n {{ include "resume-ecosystem.namespace" . }}
+
+Then access: http://localhost:4000/docs
+
+{{- end }}
+
+SERVICES
+--------
+The following services have been deployed:
+
+| Service              | Internal URL                                                              |
+|----------------------|---------------------------------------------------------------------------|
+{{- if .Values.apiGateway.enabled }}
+| API Gateway          | http://{{ include "resume-ecosystem.fullname" . }}-api-gateway:4000       |
+{{- end }}
+{{- if .Values.authService.enabled }}
+| Auth Service         | http://{{ include "resume-ecosystem.fullname" . }}-auth-service:4010      |
+{{- end }}
+{{- if .Values.activityService.enabled }}
+| Activity Service     | http://{{ include "resume-ecosystem.fullname" . }}-activity-service:4020  |
+{{- end }}
+{{- if .Values.verificationService.enabled }}
+| Verification Service | http://{{ include "resume-ecosystem.fullname" . }}-verification-service:4030 |
+{{- end }}
+{{- if .Values.resumeService.enabled }}
+| Resume Service       | http://{{ include "resume-ecosystem.fullname" . }}-resume-service:4040    |
+{{- end }}
+{{- if .Values.integrationService.enabled }}
+| Integration Service  | http://{{ include "resume-ecosystem.fullname" . }}-integration-service:4050 |
+{{- end }}
+{{- if .Values.notificationService.enabled }}
+| Notification Service | http://{{ include "resume-ecosystem.fullname" . }}-notification-service:4060 |
+{{- end }}
+{{- if .Values.fileService.enabled }}
+| File Service         | http://{{ include "resume-ecosystem.fullname" . }}-file-service:4070      |
+{{- end }}
+
+INFRASTRUCTURE
+--------------
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.external.enabled) }}
+PostgreSQL: {{ include "resume-ecosystem.fullname" . }}-postgresql:5432
+{{- end }}
+{{- if and .Values.redis.enabled (not .Values.redis.external.enabled) }}
+Redis: {{ include "resume-ecosystem.fullname" . }}-redis:6379
+{{- end }}
+{{- if and .Values.kafka.enabled .Values.kafka.strimzi.create }}
+Kafka: {{ include "resume-ecosystem.fullname" . }}-kafka-kafka-bootstrap:9092
+{{- end }}
+
+{{- if .Values.global.components.observability }}
+
+OBSERVABILITY
+-------------
+{{- if .Values.observability.jaeger.enabled }}
+Jaeger UI (tracing):
+  kubectl port-forward svc/{{ include "resume-ecosystem.fullname" . }}-jaeger 16686:16686 -n {{ include "resume-ecosystem.namespace" . }}
+  http://localhost:16686
+{{- end }}
+
+{{- if .Values.observability.prometheus.enabled }}
+Prometheus:
+  kubectl port-forward svc/{{ include "resume-ecosystem.fullname" . }}-prometheus 9090:9090 -n {{ include "resume-ecosystem.namespace" . }}
+  http://localhost:9090
+{{- end }}
+
+{{- if .Values.observability.grafana.enabled }}
+Grafana (dashboards):
+  kubectl port-forward svc/{{ include "resume-ecosystem.fullname" . }}-grafana 3000:3000 -n {{ include "resume-ecosystem.namespace" . }}
+  http://localhost:3000
+  Username: {{ .Values.observability.grafana.adminUser }}
+  Password: {{ .Values.observability.grafana.adminPassword }}
+{{- end }}
+{{- end }}
+
+NEXT STEPS
+----------
+1. Run database migrations:
+   kubectl exec -it deploy/{{ include "resume-ecosystem.fullname" . }}-auth-service -n {{ include "resume-ecosystem.namespace" . }} -- npm run migrate
+
+2. Seed the database (optional):
+   kubectl exec -it deploy/{{ include "resume-ecosystem.fullname" . }}-auth-service -n {{ include "resume-ecosystem.namespace" . }} -- npm run seed
+
+3. Access API documentation:
+   http://localhost:4000/docs (after port-forward)
+
+SECURITY REMINDER
+-----------------
+{{- if contains "CHANGE_ME" .Values.secrets.jwtSecret }}
+WARNING: You are using default secrets. For production:
+  1. Generate secure secrets: openssl rand -base64 64
+  2. Use sealed-secrets or external secrets manager
+  3. Update secrets in values.yaml or use --set flag
+{{- end }}
+
+For more information, visit: https://github.com/your-org/resume-ecosystem-node
+
