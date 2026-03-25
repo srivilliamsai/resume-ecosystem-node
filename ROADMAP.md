@@ -82,11 +82,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions and PR workflow.
 
 ### Good First Issues
 
-Look for issues tagged [`good first issue`](https://github.com/<org>/resume-ecosystem-node/labels/good%20first%20issue) — these are beginner-friendly tasks perfect for your first contribution.
+Look for issues tagged [`good first issue`](https://github.com/srivilliamsai/resume-ecosystem-node/labels/good%20first%20issue) — these are beginner-friendly tasks perfect for your first contribution.
 
 ### Suggesting Features
 
-Open a [Feature Request](https://github.com/<org>/resume-ecosystem-node/issues/new?template=feature_request.md) to propose new ideas or improvements.
+Open a [Feature Request](https://github.com/srivilliamsai/resume-ecosystem-node/issues/new?template=feature_request.md) to propose new ideas or improvements.
 
 ---
 
