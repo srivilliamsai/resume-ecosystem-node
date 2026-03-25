@@ -32,7 +32,7 @@ By participating in this project, you agree to maintain a respectful, inclusive,
    ```
 3. **Add the upstream remote:**
    ```bash
-   git remote add upstream https://github.com/<org>/resume-ecosystem-node.git
+   git remote add upstream https://github.com/srivilliamsai/resume-ecosystem-node.git
    ```
 4. **Create a branch** for your work (see [Branch Naming](#branch-naming)):
    ```bash
@@ -269,8 +269,8 @@ npm run docker:test:down
 
 ## Need Help?
 
-- 💬 Open a [GitHub Discussion](https://github.com/<org>/resume-ecosystem-node/discussions)
-- 🐛 File a [Bug Report](https://github.com/<org>/resume-ecosystem-node/issues/new?template=bug_report.md)
-- 💡 Request a [Feature](https://github.com/<org>/resume-ecosystem-node/issues/new?template=feature_request.md)
+- 💬 Open a [GitHub Discussion](https://github.com/srivilliamsai/resume-ecosystem-node/discussions)
+- 🐛 File a [Bug Report](https://github.com/srivilliamsai/resume-ecosystem-node/issues/new?template=bug_report.md)
+- 💡 Request a [Feature](https://github.com/srivilliamsai/resume-ecosystem-node/issues/new?template=feature_request.md)
 
 Thank you for contributing! 🎉
