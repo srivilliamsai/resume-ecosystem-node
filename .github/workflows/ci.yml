@@ -43,7 +43,7 @@ jobs:
 
       # Generate Prisma clients for all services before building
       - name: Generate Prisma clients
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       # Build every workspace (skips web-app which is built separately below)
       - name: Build backend workspaces
