@@ -15,6 +15,15 @@
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@resume/services": "file:../shared",
-    "common-lib": "file:../../common-lib"
+    "common-lib": "file:../../common-lib",
+    "nodemailer": "^6.9.13",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.5.4",
+    "tsx": "^4.16.2",
+    "prisma": "^6.18.0"
   }
 }

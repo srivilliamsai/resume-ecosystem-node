@@ -33,13 +33,13 @@ class WebSocketService {
     this.wss = new WebSocketServer({
       server,
       path: "/ws",
-      verifyClient: (info, callback) => {
+      verifyClient: (info: any, callback: any) => {
         // Allow connection, authentication happens after
         callback(true);
       },
     });
 
-    this.wss.on("connection", (ws, request) => {
+    this.wss.on("connection", (ws: any, request: any) => {
       this.handleConnection(ws, request);
     });
 
@@ -65,7 +65,7 @@ class WebSocketService {
       client.isAlive = true;
     });
 
-    ws.on("message", async (data) => {
+    ws.on("message", async (data: any) => {
       try {
         const message = JSON.parse(data.toString());
         await this.handleMessage(client, message);
@@ -78,7 +78,7 @@ class WebSocketService {
       this.removeClient(client);
     });
 
-    ws.on("error", (error) => {
+    ws.on("error", (error: any) => {
       logger.error({ error }, "WebSocket error");
       this.removeClient(client);
     });

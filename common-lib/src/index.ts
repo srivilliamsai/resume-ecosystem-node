@@ -72,3 +72,9 @@ export interface JwtUser {
   name?: string;
   roles: string[];
 }
+
+// Observability exports
+export * from "./observability/logger.js";
+export * from "./observability/metrics.js";
+export * from "./observability/tracing.js";
+export * from "./validateEnv.js";
