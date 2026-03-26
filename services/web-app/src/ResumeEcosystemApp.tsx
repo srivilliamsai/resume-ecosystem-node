@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Activity, Shield, BarChart3, Download, Bell, Github, Linkedin, 
+  Activity, Shield, BarChart3, Download, Bell, 
   CheckCircle, Clock, Zap, Cpu, Server, Database, Globe, ArrowRight,
   Menu, X, Sun, Moon, Plus, Filter, Search, Share2, FileText,
   User, Layers, Terminal, Command, Hash, Code, LayoutDashboard
 } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react'; // Separate import if needed or use updated import structure
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar

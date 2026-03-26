@@ -28,7 +28,7 @@ export default fp(async (fastify: FastifyInstance) => {
         }
       ]
     }
-  } as FastifySwaggerOptions);
+  });
 
   await fastify.register(swaggerUi, {
     routePrefix: '/docs',
@@ -41,5 +41,5 @@ export default fp(async (fastify: FastifyInstance) => {
     },
     staticCSP: true,
     transformStaticCSP: (header) => header
-  } as FastifySwaggerUiOptions);
+  });
 });

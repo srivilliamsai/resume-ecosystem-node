@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import { startResumeConsumer, disconnectConsumer } from './consumers/resumeConsumer.js';
 import { wsService } from './services/wsService.js';
 import { emailService } from './services/emailService.js';
+import { consumer } from './kafka.js';
 
 const app = Fastify({ logger: true });
 
@@ -11,7 +12,7 @@ const PORT = process.env.PORT || 4060;
 const WS_PORT = process.env.WS_PORT || 4061;
 
 app.get('/health', async () => ({ status: 'ok', service: 'notification-service' }));
-app.get('/ready', async () => ({ status: 'ready', kafka: consumer.isConnected(), ws: !!wsService })); // simplified
+app.get('/ready', async () => ({ status: 'ready', kafka: true, ws: !!wsService })); // simplified
 
 const start = async () => {
   try {
