@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -16,6 +17,59 @@ model User {
   createdAt DateTime   @default(now())
   activities Activity[]
   resume    Resume?
+  notifications Notification[]
+  notificationPreferences NotificationPreference?
+}
+
+enum NotificationType {
+  RESUME_PUBLISHED
+  ACTIVITY_VERIFIED
+  ACTIVITY_REJECTED
+  SYSTEM_MESSAGE
+}
+
+enum NotificationChannel {
+  EMAIL
+  WEBSOCKET
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id])
+  type      NotificationType
+  channel   NotificationChannel
+  status    NotificationStatus @default(PENDING)
+  subject   String?
+  message   String
+  metadata  Json?
+  sentAt    DateTime?
+  readAt    DateTime?
+  error     String?
+  createdAt DateTime           @default(now())
+}
+
+model NotificationPreference {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  emailEnabled     Boolean  @default(true)
+  pushEnabled      Boolean  @default(true)
+  websocketEnabled Boolean  @default(true)
+  resumePublished  Boolean  @default(true)
+  activityVerified Boolean  @default(true)
+  activityRejected Boolean  @default(true)
+  systemMessages   Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 enum ActivityType {
