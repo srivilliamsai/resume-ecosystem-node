@@ -19,7 +19,8 @@ const config: Config = {
         "2.5xl": "1.5rem"
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"]
+        sans: ["DM Sans", "Inter", "ui-sans-serif", "system-ui"],
+        mono: ["Space Mono", "JetBrains Mono", "ui-monospace", "SFMono-Regular"]
       },
       transitionTimingFunction: {
         soft: "cubic-bezier(0.4, 0, 0.2, 1)"

@@ -9,20 +9,21 @@ A next-generation **Resume Building & Career Ecosystem** that automatically buil
 ## 📘 Table of Contents
 
 1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Tech Stack](#tech-stack)
-4. [Microservices](#microservices)
-5. [Data Flow](#data-flow)
-6. [Business Logic](#business-logic)
-7. [Folder Structure](#folder-structure)
-8. [Installation](#installation)
-9. [Running the System](#running-the-system)
-10. [API Endpoints](#api-endpoints)
-11. [Events & Topics](#events--topics)
-12. [Testing](#testing)
-13. [Environment Variables](#environment-variables)
-14. [Troubleshooting](#troubleshooting)
-15. [Future Enhancements](#future-enhancements)
+2. [Quick Demo](#quick-demo)
+3. [Architecture](#architecture)
+4. [Tech Stack](#tech-stack)
+5. [Microservices](#microservices)
+6. [Data Flow](#data-flow)
+7. [Business Logic](#business-logic)
+8. [Folder Structure](#folder-structure)
+9. [Installation](#installation)
+10. [Running the System](#running-the-system)
+11. [API Endpoints](#api-endpoints)
+12. [Events & Topics](#events--topics)
+13. [Testing](#testing)
+14. [Environment Variables](#environment-variables)
+15. [Troubleshooting](#troubleshooting)
+16. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -45,6 +46,47 @@ To create a connected backend that integrates multiple sub-platforms — Interns
 
 ---
 
+## 🚀 Quick Demo (60 seconds)
+
+Get a fully working resume ecosystem with real data in one command:
+
+```bash
+npm run demo
+```
+
+Then open http://localhost:5173 and log in with any demo account:
+
+| Name | Email | Password | Resume Score |
+|------|-------|----------|--------------|
+| Arjun Sharma (CS Student) | arjun@demo.com | demo1234 | 87/100 |
+| Priya Nair (Bootcamp Grad) | priya@demo.com | demo1234 | 72/100 |
+| Rahul Mehta (Senior Dev) | rahul@demo.com | demo1234 | 95/100 |
+
+### 📸 Screenshots
+> Run `npm run demo` to see the full UI live.
+
+```
++-------------------------------------------------------------+
+|  RESUME ECOSYSTEM DASHBOARD                        [Logout] |
+|                                                             |
+|  Welcome back, Arjun!                                       |
+|  Resume Score: 87/100 (Top 10%)                             |
+|                                                             |
+|  [ Recent Activities ]                                      |
+|  ---------------------------------------------------------  |
+|  • Google Summer of Code 2024          [VERIFIED]  +15 pts  |
+|  • AWS Solutions Architect             [VERIFIED]  +10 pts  |
+|  • Smart India Hackathon Finalist      [VERIFIED]  +12 pts  |
+|                                                             |
+|  [ Your Resume ]                                            |
+|  ---------------------------------------------------------  |
+|  [View PDF]  [Share Link]  [History]                        |
+|                                                             |
++-------------------------------------------------------------+
+```
+
+---
+
 ## 🏗️ Architecture
 
 ```
@@ -61,33 +103,35 @@ Integration → Activity → Verification → Resume → Notification → File R
 
 ## ⚙️ Tech Stack
 
-| Layer     | Technology                              |
-| :-------- | :-------------------------------------- |
-| Runtime   | Node.js 20+ (TypeScript/JavaScript)     |
-| Framework | Express.js / Fastify                    |
-| ORM       | Prisma with PostgreSQL                  |
-| Cache     | Redis 7                                 |
-| Messaging | KafkaJS (Kafka 3.7+)                    |
-| Auth      | JWT (HS256/RS256)                       |
-| Docs      | Swagger / OpenAPI                       |
-| Infra     | Docker Compose                          |
-| Testing   | Jest / Supertest / Testcontainers       |
-| Utils     | Nodemon, Concurrently, ESLint, Prettier |
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | **React 18**, **TypeScript**, **TailwindCSS**, **Vite** |
+| **Backend** | **Node.js 20+**, **Fastify**, **Express** |
+| **Database** | **PostgreSQL** (via Supabase or Local Docker) |
+| **ORM** | **Prisma** (Schema-driven data access) |
+| **Messaging** | **Kafka** (Event-driven architecture) |
+| **Cache** | **Redis** (Rate limiting & caching) |
+| **Auth** | **JWT** (Stateless authentication) |
+| **Docs** | **Swagger / OpenAPI** |
+| **Infrastructure** | **Docker Compose** |
 
 ---
 
 ## 🧱 Microservices
 
-| Service                  | Port   | Responsibility                                    |
-| ------------------------ | ------ | ------------------------------------------------- |
-| **api-gateway**          | `4000` | Central router, CORS, JWT pass-through            |
-| **auth-service**         | `4010` | User registration, login, JWT issuance            |
-| **activity-service**     | `4020` | Manage internships, courses, hackathons, projects |
-| **verification-service** | `4030` | Verify authenticity (hash/signature/OAuth)        |
-| **resume-service**       | `4040` | Build, rank, and version resumes                  |
-| **integration-service**  | `4050` | Connect external APIs (GitHub, Coursera, etc.)    |
-| **notification-service** | `4060` | Consume `resume.version.published` events         |
-| **file-service**         | `4070` | Render resume PDFs and templates                  |
+| Service | Port | Responsibility |
+| :--- | :--- | :--- |
+| **web-app** | `5173` | Modern React Frontend Dashboard |
+| **api-gateway** | `4000` | Central router, CORS, JWT pass-through |
+| **auth-service** | `4010` | User registration, login, JWT issuance |
+| **activity-service** | `4020` | Manage internships, courses, hackathons |
+| **verification-service** | `4030` | Verify authenticity (hash/signature) |
+| **resume-service** | `4040` | Build, rank, and version resumes |
+| **integration-service** | `4050` | Connect external APIs (GitHub, LinkedIn) |
+| **notification-service** | `4060` | Email & WebSocket notifications |
+| **file-service** | `4070` | Render resume PDFs |
+
+---
 
 ---
 
@@ -175,48 +219,52 @@ resume-ecosystem/
 * Node.js ≥ 20
 * Docker & Docker Compose
 * npm / pnpm
-* Kafka & Postgres ports open (`9092`, `5432`)
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/<yourname>/resume-ecosystem.git
-cd resume-ecosystem
+git clone https://github.com/srivilliamsai/resume-ecosystem-node.git
+cd resume-ecosystem-node
 ```
 
-### 2. Install Dependencies & Build
+### 2. Install Dependencies
 
 ```bash
 npm install
-npm run prisma:generate
-npm run build
 ```
 
-### 3. Start Infrastructure
+### 3. Start Infrastructure (Database & Kafka)
 
 ```bash
-cd docker
-docker compose up -d
+npm run docker:up
+```
+> Wait 10-15 seconds for containers to initialize.
+
+### 4. Initialize Database
+
+```bash
+npm run db:push
+npm run seed  # (Optional: Populates demo data)
 ```
 
-Services started:
-
-* Kafka → localhost:9092
-* Zookeeper → localhost:2181
-* Postgres → localhost:5432
-* Redis → localhost:6379
-* Kafka UI → [http://localhost:8080](http://localhost:8080)
-
-### 4. Run All Services
+### 5. Run Full Stack (Frontend + Backend)
 
 ```bash
-cd ..
 npm run dev
 ```
 
 ---
 
-## 🌐 API Endpoints
+## 🌐 Access Points
+
+| Application | URL |
+| :--- | :--- |
+| **Frontend Dashboard** | [http://localhost:5173](http://localhost:5173) |
+| **API Documentation** | [http://localhost:4000/docs](http://localhost:4000/docs) |
+| **Kafka UI** | [http://localhost:8080](http://localhost:8080) |
+| **Prisma Studio** | `npx prisma studio` |
+
+---
 
 ### Auth Service
 
@@ -326,12 +374,26 @@ FILE_PORT=4070
 
 ---
 
-## 🧭 Future Enhancements
+## 🧭 Roadmap
 
-* Add OAuth 2.0 full integration (Google, LinkedIn, Coursera)
-* Implement GraphQL API gateway
-* Introduce ML-powered Resume Scoring
-* Add real-time WebSocket notifications
-* Deploy to Kubernetes with Helm charts
+- [x] **Frontend:** React + Tailwind Dashboard
+- [x] **Backend:** 8 Microservices Architecture
+- [x] **Messaging:** Kafka Event Pipeline
+- [x] **Database:** PostgreSQL + Prisma Schema
+- [ ] **Auth:** OAuth 2.0 (Google/GitHub/LinkedIn)
+- [ ] **Deployment:** Docker & Kubernetes Helm Charts
+- [ ] **AI:** Resume Scoring & Suggestion Engine
 
----
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue first to discuss what you would like to change.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

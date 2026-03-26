@@ -1,4 +1,4 @@
-// services/auth-service/jest.config.ts
+// services/activity-service/jest.config.ts
 import type { Config } from 'jest';
 
 const config: Config = {
@@ -17,7 +17,7 @@ const config: Config = {
       },
     ],
   },
-  // Coverage thresholds as requested
+  // Coverage thresholds
   coverageThreshold: {
     global: {
       statements: 70,

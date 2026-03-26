@@ -1,20 +1,19 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/client"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   name      String?
   password  String?
   roles     String[]
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
   activities Activity[]
   resume    Resume?
 }
@@ -59,47 +58,47 @@ enum ResumeVisibility {
 }
 
 model Activity {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  type        ActivityType
-  title       String
-  org         String?
-  startDate   DateTime?
-  endDate     DateTime?
-  status      ActivityStatus @default(PENDING)
-  source      String         @default("MANUAL")
-  metadata    Json?
-  createdAt   DateTime       @default(now())
-  artifacts   AchievementArtifact[]
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  type      ActivityType
+  title     String
+  org       String?
+  startDate DateTime?
+  endDate   DateTime?
+  status    ActivityStatus  @default(PENDING)
+  source    String          @default("MANUAL")
+  metadata  Json?
+  createdAt DateTime        @default(now())
+  artifacts AchievementArtifact[]
   verifications VerificationCase[]
 }
 
 model AchievementArtifact {
-  id          String   @id @default(cuid())
-  activityId  String
-  activity    Activity  @relation(fields: [activityId], references: [id])
-  kind        ArtifactKind
-  url         String
-  sha256Hex   String
+  id         String       @id @default(cuid())
+  activityId String
+  activity   Activity     @relation(fields: [activityId], references: [id])
+  kind       ArtifactKind
+  url        String
+  sha256Hex  String
 }
 
 model VerificationCase {
-  id          String   @id @default(cuid())
-  activityId  String
-  activity    Activity @relation(fields: [activityId], references: [id])
-  method      VerificationMethod
-  status      VerificationStatus
-  logs        Json?
-  verifiedAt  DateTime?
+  id         String             @id @default(cuid())
+  activityId String
+  activity   Activity           @relation(fields: [activityId], references: [id])
+  method     VerificationMethod
+  status     VerificationStatus
+  logs       Json?
+  verifiedAt DateTime?
 }
 
 model Resume {
-  id               String         @id @default(cuid())
-  userId           String         @unique
-  user             User           @relation(fields: [userId], references: [id])
-  currentVersionId String?        @unique   // ✅ Added unique constraint here
-  currentVersion   ResumeVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id])
+  currentVersionId String?
+  currentVersion   ResumeVersion?   @relation("CurrentVersion", fields: [currentVersionId], references: [id])
   visibility       ResumeVisibility @default(PRIVATE)
   versions         ResumeVersion[]
 }
@@ -111,13 +110,12 @@ model ResumeVersion {
   createdAt DateTime @default(now())
   score     Int
   sections  Json
-
-  currentOf Resume? @relation("CurrentVersion")
+  currentFor Resume[] @relation("CurrentVersion")
 }
 
 model TrustedIssuer {
-  id        String   @id @default(cuid())
-  domain    String   @unique
+  id        String @id @default(cuid())
+  domain    String @unique
   publicKey String
   methods   String
 }
