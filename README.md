@@ -1,12 +1,12 @@
-# 🧠 Resume Ecosystem – Intelligent Resume & Career Platform
+#  Resume Ecosystem – Intelligent Resume & Career Platform
 
-### 🚀 Node.js | Kafka | Postgres | Redis | Microservices | Prisma | Docker
+###  Node.js | Kafka | Postgres | Redis | Microservices | Prisma | Docker
 
 A next-generation **Resume Building & Career Ecosystem** that automatically builds **dynamic, verified resumes** from real achievements — internships, hackathons, online courses, and projects — and updates them in real-time as users complete new activities.
 
 ---
 
-## 📘 Table of Contents
+##  Table of Contents
 
 1. [Overview](#overview)
 2. [Quick Demo](#quick-demo)
@@ -27,7 +27,7 @@ A next-generation **Resume Building & Career Ecosystem** that automatically buil
 
 ---
 
-## 🧩 Overview
+##  Overview
 
 **Goal:**
 To create a connected backend that integrates multiple sub-platforms — Internship Platforms, Hackathon Platforms, Online Learning Systems, and Project Verification Modules — into a unified ecosystem where verified achievements automatically update a student’s professional resume.
@@ -46,7 +46,7 @@ To create a connected backend that integrates multiple sub-platforms — Interns
 
 ---
 
-## 🚀 Quick Demo (60 seconds)
+##  Quick Demo (60 seconds)
 
 Get a fully working resume ecosystem with real data in one command:
 
@@ -62,7 +62,7 @@ Then open http://localhost:5173 and log in with any demo account:
 | Priya Nair (Bootcamp Grad) | priya@demo.com | demo1234 | 72/100 |
 | Rahul Mehta (Senior Dev) | rahul@demo.com | demo1234 | 95/100 |
 
-### 📸 Screenshots
+###  Screenshots
 > Run `npm run demo` to see the full UI live.
 
 ```
@@ -87,11 +87,11 @@ Then open http://localhost:5173 and log in with any demo account:
 
 ---
 
-## 🏗️ Architecture
+## ️ Architecture
 
 ```
-Integration → Activity → Verification → Resume → Notification → File Renderer
-                       ↘ Auth & JWT Gateway ↗
+Integration  Activity  Verification  Resume  Notification  File Renderer
+                        Auth & JWT Gateway
 ```
 
 * **Event-driven microservice architecture** (loosely coupled)
@@ -101,7 +101,7 @@ Integration → Activity → Verification → Resume → Notification → File R
 
 ---
 
-## ⚙️ Tech Stack
+## ️ Tech Stack
 
 | Layer | Technology |
 | :--- | :--- |
@@ -117,7 +117,7 @@ Integration → Activity → Verification → Resume → Notification → File R
 
 ---
 
-## 🧱 Microservices
+##  Microservices
 
 | Service | Port | Responsibility |
 | :--- | :--- | :--- |
@@ -135,25 +135,25 @@ Integration → Activity → Verification → Resume → Notification → File R
 
 ---
 
-## 🔄 Data Flow
+##  Data Flow
 
-1. **User adds an activity** →
+1. **User adds an activity**
    `activity.created` event emitted.
 
-2. **Verification service** listens →
-   validates authenticity → emits `activity.verified`.
+2. **Verification service** listens
+   validates authenticity  emits `activity.verified`.
 
-3. **Resume service** consumes verified event →
-   rebuilds and re-scores resume → emits `resume.version.published`.
+3. **Resume service** consumes verified event
+   rebuilds and re-scores resume  emits `resume.version.published`.
 
-4. **Notification service** consumes publish event →
+4. **Notification service** consumes publish event
    notifies user via email/WS.
 
 5. **File service** allows rendering of the latest resume as PDF.
 
 ---
 
-## 🧠 Business Logic
+##  Business Logic
 
 ### 1. Activity Deduplication
 
@@ -163,7 +163,7 @@ Detect duplicate entries using **Jaccard similarity** between titles:
 similarity = |tokensA ∩ tokensB| / |tokensA ∪ tokensB|
 ```
 
-If ≥ 0.7 → reject as duplicate (HTTP 409).
+If ≥ 0.7  reject as duplicate (HTTP 409).
 
 ### 2. Verification Cache
 
@@ -188,7 +188,7 @@ Top-K selection per section.
 
 ---
 
-## 📂 Folder Structure
+##  Folder Structure
 
 ```
 resume-ecosystem/
@@ -212,7 +212,7 @@ resume-ecosystem/
 
 ---
 
-## ⚡ Installation
+##  Installation
 
 ### Prerequisites
 
@@ -255,7 +255,7 @@ npm run dev
 
 ---
 
-## 🌐 Access Points
+##  Access Points
 
 | Application | URL |
 | :--- | :--- |
@@ -299,7 +299,7 @@ npm run dev
 
 ---
 
-## 📡 Events & Topics
+##  Events & Topics
 
 | Topic                          | Producer             | Consumer             | Description               |
 | ------------------------------ | -------------------- | -------------------- | ------------------------- |
@@ -310,7 +310,7 @@ npm run dev
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 ### Run All Tests
 
@@ -326,9 +326,9 @@ npm test
 
 ---
 
-## ⚙️ Environment Variables
+## ️ Environment Variables
 
-📄 `.env.example`
+ `.env.example`
 
 ```
 # Common
@@ -362,7 +362,7 @@ FILE_PORT=4070
 
 ---
 
-## 🧰 Troubleshooting
+##  Troubleshooting
 
 | Issue                   | Cause                         | Fix                         |
 | ----------------------- | ----------------------------- | --------------------------- |
@@ -374,7 +374,7 @@ FILE_PORT=4070
 
 ---
 
-## 🧭 Roadmap
+##  Roadmap
 
 - [x] **Frontend:** React + Tailwind Dashboard
 - [x] **Backend:** 8 Microservices Architecture
@@ -384,7 +384,7 @@ FILE_PORT=4070
 - [ ] **Deployment:** Docker & Kubernetes Helm Charts
 - [ ] **AI:** Resume Scoring & Suggestion Engine
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please open an issue first to discuss what you would like to change.
 
@@ -394,6 +394,6 @@ Contributions are welcome! Please open an issue first to discuss what you would 
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+##  License
 
 Distributed under the MIT License. See `LICENSE` for more information.
